@@ -80,6 +80,11 @@ run-example03:
 	head -n 1 wannier_band.kpt >> wannier_geninterp.kpt
 	awk 'FNR > 1 {OFS=" "; print NR-1,$$1,$$2,$$3}' wannier_band.kpt >> wannier_geninterp.kpt
 	$(POSTW90) wannier
+	# Outer window starting above band 1 at some k-points (trimmed u_matrix_opt rows not at band 1)
+	mkdir -p win_min
+	cp wannier.amn wannier.mmn wannier.eig wannier.win win_min/
+	echo "dis_win_min = -3.0" >> win_min/wannier.win
+	cd win_min && $(W90) -pp wannier && $(W90) wannier
 
 .PHONY: run-example04
 run-example04:

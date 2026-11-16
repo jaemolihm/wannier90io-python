@@ -1,5 +1,8 @@
 # API Reference
 
+::: wannier90io.WannierData
+::: wannier90io.Wannier90Data
+
 ::: wannier90io.parse_win_raw
 ::: wannier90io.parse_nnkp_raw
 ::: wannier90io.parse_wout_iteration_info
