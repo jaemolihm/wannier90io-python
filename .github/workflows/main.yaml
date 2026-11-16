@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: [ '3.8', '3.9', '3.10' ]
@@ -31,13 +31,15 @@ jobs:
       - name: Make fixtures
         if: steps.cache-test-fixtures.outputs.cache-hit != 'true'
         run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran libblas-dev liblapack-dev
           make -C ./tests/fixtures
       - name: Run tests
         run: |
           pytest -v
 
   docs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
