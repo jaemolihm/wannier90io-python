@@ -23,10 +23,14 @@ pushd wannier90-${version}
 if [ "$version" == "2.0.1" ]; then
   touch make.sys
   echo "F90=gfortran" >> make.sys
+  # gfortran >= 10 rejects the BLAS/MPI argument rank mismatches of these releases
+  echo "FCOPTS=-O2 -fallow-argument-mismatch" >> make.sys
   echo "LIBS=-lblas -llapack" >> make.sys
 else
   touch make.inc
   echo "F90=gfortran" >> make.inc
+  # gfortran >= 10 rejects the BLAS/MPI argument rank mismatches of these releases
+  echo "FCOPTS=-O2 -fallow-argument-mismatch" >> make.inc
   echo "LIBS=-lblas -llapack" >> make.inc
 fi
 
