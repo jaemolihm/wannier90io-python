@@ -16,6 +16,6 @@ def test_parse_nnkp(wannier90, example):
         assert False
 
     try:
-        w90io._schema.NNKP.parse_obj(parsed_nnkp)
+        w90io._schema.NNKP.model_validate(parsed_nnkp)
     except Exception:
         assert False

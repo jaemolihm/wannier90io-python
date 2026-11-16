@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.11', '3.12', '3.13', '3.14', '3.15' ]
     steps:
       - uses: actions/checkout@v3
       - name: Cache test fixtures
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
-          python-version: '3.8'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install -r requirements/dev-requirements.txt

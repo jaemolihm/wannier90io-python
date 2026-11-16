@@ -16,7 +16,7 @@ def test_parse_win(wannier90, example):
         assert False
 
     try:
-        w90io._schema.WIN.parse_obj(parsed_win)
+        w90io._schema.WIN.model_validate(parsed_win)
     except Exception:
         assert False
 

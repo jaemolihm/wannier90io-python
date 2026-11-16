@@ -26,16 +26,13 @@ plugins:
       default_handler: python
       handlers:
         python:
-          selection:
+          options:
             docstring_style: google
-          rendering:
             show_root_heading: true
             show_root_toc_entry: false
             show_signature_annotations: true
             show_source: true
             members_order: source
-      watch:
-        - src/wannier90io
 
 extra:
   social:
@@ -52,3 +49,4 @@ nav:
 
 watch:
   - README.md
+  - src/wannier90io
