@@ -46,6 +46,12 @@ def test_wannier90_data(wannier90, example):
     elif not chk['have_disentangled']:
         # Isolated bands: H(k) is a unitary rotation of diag(eigenvalues)
         assert np.allclose(np.linalg.eigvalsh(wd.hamiltonian_k()), wd.eigenvalues)
+    else:
+        # Disentangled: the frozen-window energies are eigenvalues of H(k)
+        eig_hk = np.linalg.eigvalsh(wd.hamiltonian_k())
+        for ik in range(wd.num_kpts):
+            frozen = wd.eigenvalues[ik, wd.lfrozen[ik]]
+            assert np.allclose(np.abs(frozen[:, None] - eig_hk[ik][None, :]).min(axis=1), 0)
 
 
 @pytest.mark.parametrize('example', ['example01', 'example02', 'example03', 'example04', 'example03/win_min'])
@@ -100,8 +106,8 @@ def example03_copy(wannier90, tmp_path):
 
 
 @pytest.mark.parametrize('line, error, match', [
-    ('dis_froz_degen = true', NotImplementedError, 'dis_froz_degen'),
     ('dis_froz_proj = .true.', NotImplementedError, 'dis_froz_proj'),
+    ('dis_froz_proj = .t.', NotImplementedError, 'dis_froz_proj'),  # a logical with 't' is true in Wannier90
     ('dis_spheres_num = 1', NotImplementedError, 'dis_spheres_num'),
     ('dis_win_min = 0.0', ValueError, 'lwindow differs'),
 ])
@@ -109,6 +115,42 @@ def test_wannier90_data_win_errors(example03_copy, line, error, match):
     with open(example03_copy/'wannier.win', 'a') as fh:
         fh.write(f'\n{line}\n')
     with pytest.raises(error, match=match):
+        w90io.Wannier90Data.from_files(example03_copy, 'wannier')
+
+
+@pytest.mark.parametrize('line', ['dis_froz_proj = .f.', 'dis_froz_proj = false', 'dis_spheres_num = 0'])
+def test_wannier90_data_win_off(example03_copy, line):
+    with open(example03_copy/'wannier.win', 'a') as fh:
+        fh.write(f'\n{line}\n')
+    wd = w90io.Wannier90Data.from_files(example03_copy, 'wannier')
+    assert wd.lfrozen.any()
+
+
+def test_wannier90_data_froz_min(example03_copy):
+    wd = w90io.Wannier90Data.from_files(example03_copy, 'wannier')
+    with open(example03_copy/'wannier.win', 'a') as fh:
+        fh.write('\ndis_froz_min = 0.0\n')
+    wd_min = w90io.Wannier90Data.from_files(example03_copy, 'wannier')
+
+    assert wd_min.dis_froz_min == 0.0
+    assert np.array_equal(wd_min.lfrozen, wd.lfrozen & (wd.eigenvalues >= 0.0))
+    assert wd_min.lfrozen.sum() < wd.lfrozen.sum()
+
+
+def test_wannier90_data_chk_fmt(wannier90, example03_copy):
+    """Without the binary .chk, the formatted .chk.fmt is read."""
+    wd = w90io.Wannier90Data.from_files(example03_copy, 'wannier')
+    (example03_copy/'wannier.chk').unlink()
+    shutil.copy(pathlib.Path(wannier90)/'examples/example03/wannier.chk.fmt', example03_copy)
+    wd_fmt = w90io.Wannier90Data.from_files(example03_copy, 'wannier')
+    for field in dataclasses.fields(wd):
+        assert np.array_equal(getattr(wd_fmt, field.name), getattr(wd, field.name)), field.name
+
+
+def test_wannier90_data_eig_shape(example03_copy):
+    lines = (example03_copy/'wannier.eig').read_text().splitlines(keepends=True)
+    (example03_copy/'wannier.eig').write_text(''.join(lines[:-12]))  # drop the last k-point
+    with pytest.raises(ValueError, match=r'wannier.eig has \(num_kpts, num_bands\)'):
         w90io.Wannier90Data.from_files(example03_copy, 'wannier')
 
 

@@ -46,8 +46,9 @@ def convert(string: str) -> int | float | bool | str | list[int] | list[float]:
         except ValueError:
             return [float(x) for x in re.split(r'[ \t,;]+', string)]
     elif re.compile(rf'^{expressions["range-item"]}([ \t,;]+{expressions["range-item"]})*$').match(string):
-        # Range vector as in Wannier90 w90_readwrite_get_range_vector: items separated by
-        # " ,;", each an integer or a range "i-j" / "i:j" (min to max, spaces allowed around "-"/":")
+        # Range vector in the syntax of Wannier90 w90_readwrite_get_range_vector: items separated by
+        # " ,;", each an integer or a range "i-j" / "i:j" (min to max, spaces allowed around "-"/":").
+        # Inputs Wannier90 rejects (empty items, duplicates) are not checked.
         values = []
         for (i1, i2) in re.findall(r'(\d+)(?:[ \t]*[-:][ \t]*(\d+))?', string):
             if i2:

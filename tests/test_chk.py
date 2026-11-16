@@ -198,3 +198,8 @@ def test_read_chk_unformatted_errors(chk_raw, tmp_path):
     path.write_bytes(bytes(raw))
     with pytest.raises(ValueError, match="'m_matrix': inconsistent subrecord markers"):
         w90io.read_chk_unformatted(path)
+
+    # File ends inside a subrecord chain (after the first m_matrix subrecord)
+    path.write_bytes(bytes(raw[:offset + 1008]))
+    with pytest.raises(ValueError, match="'m_matrix': end of file in the middle of a subrecord chain"):
+        w90io.read_chk_unformatted(path)

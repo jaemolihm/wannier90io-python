@@ -141,7 +141,9 @@ class WannierData(abc.ABC):
     def _overlaps_in_wannier_gauge(self, mmn: np.ndarray, nnkpts: np.ndarray) -> np.ndarray:
         """V(k)^dagger M(k, b) V(k+b), shape (num_kpts, nntot, num_wann, num_wann)."""
         V_kb = self.V[nnkpts[:, :, 1]]  # (num_kpts, nntot, num_bands, num_wann)
-        return np.einsum('kmi,kbmn,kbnj->kbij', self.V.conj(), mmn, V_kb)
+        V_k_dagger = self.V.conj().transpose((0, 2, 1))[:, None]  # (num_kpts, 1, num_wann, num_bands)
+        # Two batched matmuls; a 3-operand einsum would loop over all four band indices at once
+        return V_k_dagger @ mmn @ V_kb
 
 
 @dataclasses.dataclass(eq=False)
@@ -158,8 +160,8 @@ class Wannier90Data(WannierData):
         the bands with lwindow(:, k) = .true., in band order (disentangle.F90 dis_main and
         dis_windows_proj). lfrozen is not in the checkpoint; it is rebuilt from the frozen
         energy window as in disentangle.F90 dis_windows. Frozen states selected by
-        projectability (dis_froz_proj), degeneracy (dis_froz_degen) or k-space spheres
-        (dis_spheres_num) are not supported and raise NotImplementedError.
+        projectability (dis_froz_proj) or k-space spheres (dis_spheres_num) are not
+        supported and raise NotImplementedError.
         """
         folder = pathlib.Path(folder)
 
@@ -184,9 +186,14 @@ class Wannier90Data(WannierData):
 
         with open(folder/f'{prefix}.win', 'r') as fh:
             parameters = {k.lower(): v for (k, v) in parse_win_raw(fh.read())['parameters'].items()}
-        for key in ['dis_froz_proj', 'dis_froz_degen', 'dis_spheres_num']:
-            if parameters.get(key):
-                raise NotImplementedError(f'{prefix}.win sets {key}; only the energy frozen window is supported')
+        # Logical as Wannier90 reads it (readwrite.F90 w90_readwrite_get_keyword): true if it contains 't'
+        dis_froz_proj = parameters.get('dis_froz_proj', False)
+        if isinstance(dis_froz_proj, str):
+            dis_froz_proj = 't' in dis_froz_proj.lower()
+        if dis_froz_proj:
+            raise NotImplementedError(f'{prefix}.win sets dis_froz_proj; only the energy frozen window is supported')
+        if parameters.get('dis_spheres_num', 0) > 0:
+            raise NotImplementedError(f'{prefix}.win sets dis_spheres_num; only the energy frozen window is supported')
         windows = {key: (float(parameters[key]) if key in parameters else None)
                    for key in ['dis_win_min', 'dis_win_max', 'dis_froz_min', 'dis_froz_max']}
         if windows['dis_froz_min'] is not None and windows['dis_froz_max'] is None:
@@ -204,6 +211,8 @@ class Wannier90Data(WannierData):
                     raise ValueError(f'{prefix}.chk: u_matrix_opt is nonzero beyond row ndimwin at k-point {ik + 1}')
                 V[ik, lwindow[ik]] = chk['u_matrix_opt'][ik, :ndimwin] @ chk['u_matrix'][ik]
         else:  # isolated bands: num_bands = num_wann, V = U
+            if Nb != Nw:
+                raise ValueError(f'{prefix}.chk: num_bands = {Nb} differs from num_wann = {Nw} without disentanglement')
             lwindow = np.ones((Nk, Nb), dtype=bool)
             V[:] = chk['u_matrix']
 
