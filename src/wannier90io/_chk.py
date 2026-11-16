@@ -62,6 +62,9 @@ def read_chk_unformatted(path: typing.Union[str, os.PathLike]) -> dict:
     Records longer than 2 GiB, which gfortran splits into subrecords, are supported.
     Any other layout (big-endian, 8-byte markers, `-i8` builds) raises `ValueError`.
 
+    Reference writer: `w90_wannier90_readwrite_write_chkpt` in wannier90 `src/wannier90_readwrite.F90`
+    (`param_write_chkpt` in `src/parameters.F90` for v2.0.1 to v3.1.0; the record layout is the same).
+
     Arguments:
         path: path to the seedname.chk file
 
@@ -77,12 +80,14 @@ def read_chk_unformatted(path: typing.Union[str, os.PathLike]) -> dict:
 
     """
     with open(path, 'rb') as fh:
-        # The header record is 33 bytes between two 4-byte markers; with 8-byte markers,
-        # the low half of the leading marker is also 33, so the trailing marker is checked too
+        # The first record is the header (`character(len=33) :: header` in the writer):
+        # 4-byte leading marker, 33-byte payload, 4-byte trailing marker, both markers = 33.
+        # With 8-byte markers the low half of the leading marker is also 33, so check both.
+        # Bytes [0, 4): leading marker, [4, 37): header, [37, 41): trailing marker.
         first_record = fh.read(4 + 33 + 4)
         fh.seek(0)
         header_markers = (first_record[:4], first_record[37:])
-        if len(first_record) < 41 or any(int.from_bytes(m, 'little', signed=True) != 33 for m in header_markers):
+        if any(len(m) != 4 or int.from_bytes(m, 'little', signed=True) != 33 for m in header_markers):
             raise ValueError(
                 f'{path}: the first record is not the 33-character header with a 4-byte little-endian '
                 'record marker; the file is not a standard (gfortran/ifort default) unformatted '
