@@ -14,20 +14,8 @@ define normalize_seedname
 	$(foreach fname, $(wildcard $(call seedname)*), mv $(fname) $(addsuffix $(suffix $(fname)), wannier);)
 endef
 
-ifeq ($(WANNIER90_VERSION), 2.0.1)
-	WRITE_HR = "hr_plot=true"
-else
-	WRITE_HR = "write_hr=true"
-endif
-
-# Only implemented in version 3.x
-ifeq ($(WANNIER90_VERSION), 2.0.1)
-	WRITE_U_MATRICES = ""
-else ifeq ($(WANNIER90_VERSION), 2.1)
-	WRITE_U_MATRICES = ""
-else
-	WRITE_U_MATRICES = "write_u_matrices=true"
-endif
+WRITE_HR = "write_hr=true"
+WRITE_U_MATRICES = "write_u_matrices=true"
 
 define modify_win
 	echo $(WRITE_HR) >> wannier.win

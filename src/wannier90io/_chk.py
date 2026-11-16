@@ -63,7 +63,7 @@ def read_chk_unformatted(path: typing.Union[str, os.PathLike]) -> dict:
     Any other layout (big-endian, 8-byte markers, `-i8` builds) raises `ValueError`.
 
     Reference writer: `w90_wannier90_readwrite_write_chkpt` in wannier90 `src/wannier90_readwrite.F90`
-    (`param_write_chkpt` in `src/parameters.F90` for v2.0.1 to v3.1.0; the record layout is the same).
+    (`param_write_chkpt` in `src/parameters.F90` for v3.0.0 and v3.1.0; the record layout is the same).
 
     Arguments:
         path: path to the seedname.chk file
