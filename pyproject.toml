@@ -17,7 +17,8 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
-  "pydantic",
+  "pydantic>=2",
+  "scipy",
 ]
 dynamic=['version']
 

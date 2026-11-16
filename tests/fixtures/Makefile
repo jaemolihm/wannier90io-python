@@ -1,4 +1,4 @@
-WANNIER90_VERSIONS := 2.0.1 2.1 3.0.0 3.1.0
+WANNIER90_VERSIONS := 3.0.0 3.1.0 4.0.2
 
 FIXTURE_DIRS := $(foreach version,$(WANNIER90_VERSIONS),./wannier90-$(version))
 WANNIER90_FIXTURES := $(foreach version,$(WANNIER90_VERSIONS),_wannier90-$(version))

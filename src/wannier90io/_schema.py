@@ -5,7 +5,7 @@ import pydantic
 
 
 class UnitCell(pydantic.BaseModel):
-    units: typing.Optional[str]
+    units: typing.Optional[str] = None
     a1: list
     a2: list
     a3: list
@@ -29,12 +29,12 @@ class Atom(pydantic.BaseModel):
 
 
 class Atoms(pydantic.BaseModel):
-    units: typing.Optional[str]
+    units: typing.Optional[str] = None
     atoms: typing.List[Atom]
 
 
 class Projections(pydantic.BaseModel):
-    units: typing.Optional[str]
+    units: typing.Optional[str] = None
     projections: typing.List[str]
 
 
@@ -43,16 +43,16 @@ class Kpoints(pydantic.BaseModel):
 
 
 class ExcludeBands(pydantic.BaseModel):
-    exclude_bands: typing.Optional[typing.List[int]]
+    exclude_bands: typing.Optional[typing.List[int]] = None
 
 
 class WIN(pydantic.BaseModel):
     comments: typing.List[str]
     parameters: dict
     blocks: dict
-    unit_cell_cart: typing.Optional[UnitCell]
-    atoms_frac: typing.Optional[Atoms]
-    atoms_cart: typing.Optional[Atoms]
+    unit_cell_cart: typing.Optional[UnitCell] = None
+    atoms_frac: typing.Optional[Atoms] = None
+    atoms_cart: typing.Optional[Atoms] = None
     projections: Projections
     kpoints: Kpoints
 

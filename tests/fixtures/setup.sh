@@ -20,15 +20,11 @@ tar zxf v${version}.tar.gz
 
 pushd wannier90-${version}
 
-if [ "$version" == "2.0.1" ]; then
-  touch make.sys
-  echo "F90=gfortran" >> make.sys
-  echo "LIBS=-lblas -llapack" >> make.sys
-else
-  touch make.inc
-  echo "F90=gfortran" >> make.inc
-  echo "LIBS=-lblas -llapack" >> make.inc
-fi
+touch make.inc
+echo "F90=gfortran" >> make.inc
+# gfortran >= 10 rejects the BLAS/MPI argument rank mismatches of these releases
+echo "FCOPTS=-O2 -fallow-argument-mismatch" >> make.inc
+echo "LIBS=-lblas -llapack" >> make.inc
 
 make wannier post w90chk2chk
 
@@ -36,4 +32,12 @@ popd
 popd
 
 cp $WANNIER90_TMP/wannier90-${version}/*.x ./wannier90-$1/
-cp -r $WANNIER90_TMP/wannier90-${version}/examples ./wannier90-$1/
+if [ -d "$WANNIER90_TMP/wannier90-${version}/examples" ]; then
+  cp -r $WANNIER90_TMP/wannier90-${version}/examples ./wannier90-$1/
+else
+  # v4 renamed examples/exampleNN to tutorials/tutorialNN (same systems, same numbers)
+  mkdir -p ./wannier90-$1/examples
+  for dir in $WANNIER90_TMP/wannier90-${version}/tutorials/tutorial*; do
+    cp -r $dir ./wannier90-$1/examples/$(basename $dir | sed 's/^tutorial/example/')
+  done
+fi

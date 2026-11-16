@@ -9,6 +9,7 @@ expressions = {
         r'[-+]?(\d+(\.\d*)?|\.\d+)([eEdD][-+]?\d+)?[ \t,;]+'
         r'[-+]?(\d+(\.\d*)?|\.\d+)([eEdD][-+]?\d+)?'
     ),
+    'range-item': r'\d+([ \t]*[-:][ \t]*\d+)?',
 }
 
 patterns = {
@@ -35,23 +36,25 @@ def convert(string: str) -> int | float | bool | str | list[int] | list[float]:
         return int(string)
     elif re.compile(r'^[-+]?(\d+(\.\d*)?|\.\d+)([eEdD][-+]?\d+)?$').match(string):
         return float(string.replace('d', 'e').replace('D', 'e'))
-    elif re.compile(r'^t|true|[.]true[.]$', re.IGNORECASE).match(string):
+    elif re.compile(r'^(t|true|[.]true[.])$', re.IGNORECASE).match(string):
         return True
-    elif re.compile(r'^f|false|[.]false[.]$', re.IGNORECASE).match(string):
+    elif re.compile(r'^(f|false|[.]false[.])$', re.IGNORECASE).match(string):
         return False
     elif re.compile(rf'^{expressions["3-vector"]}$').match(string):
         try:
             return [int(x) for x in re.split(r'[ \t,;]+', string)]
         except ValueError:
             return [float(x) for x in re.split(r'[ \t,;]+', string)]
-    elif re.compile(r'^\d+(-\d+)?([ \t,;]+\d+(-\d+)?)+$').match(string):
+    elif re.compile(rf'^{expressions["range-item"]}([ \t,;]+{expressions["range-item"]})*$').match(string):
+        # Range vector in the syntax of Wannier90 w90_readwrite_get_range_vector: items separated by
+        # " ,;", each an integer or a range "i-j" / "i:j" (min to max, spaces allowed around "-"/":").
+        # Inputs Wannier90 rejects (empty items, duplicates) are not checked.
         values = []
-        for component in re.split('[ \t,;]', string):
-            if '-' in component:
-                [i1, i2] = list(map(int, component.split('-')))
-                values += list(range(i1, i2+1))
+        for (i1, i2) in re.findall(r'(\d+)(?:[ \t]*[-:][ \t]*(\d+))?', string):
+            if i2:
+                values += list(range(min(int(i1), int(i2)), max(int(i1), int(i2)) + 1))
             else:
-                values.append(int(component))
+                values.append(int(i1))
         return values
     else:
         return string

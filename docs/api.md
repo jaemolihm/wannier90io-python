@@ -1,11 +1,15 @@
 # API Reference
 
+::: wannier90io.WannierData
+::: wannier90io.Wannier90Data
+
 ::: wannier90io.parse_win_raw
 ::: wannier90io.parse_nnkp_raw
 ::: wannier90io.parse_wout_iteration_info
 ::: wannier90io.read_amn
 ::: wannier90io.write_amn
 ::: wannier90io.read_chk
+::: wannier90io.read_chk_unformatted
 ::: wannier90io.read_u
 ::: wannier90io.read_unk_formatted
 ::: wannier90io.read_eig
